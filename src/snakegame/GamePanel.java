@@ -29,9 +29,9 @@ import java.util.Random;
  */
 public class GamePanel extends JPanel implements ActionListener {
     
-    static final int SCREEN_WIDTH = 600;
-    static final int SCREEN_HEIGHT = 600;
     static final int UNIT_SIZE = 25; // La taille d'une cellule
+    static final int SCREEN_WIDTH = 600;
+    static final int SCREEN_HEIGHT = 600 + UNIT_SIZE;
     
     static final int MAX_APPLES_PER_LEVEL = 7;
     static final int ACCELERATION = 25;
@@ -67,13 +67,13 @@ public class GamePanel extends JPanel implements ActionListener {
     
     public void startGame() {
         
-        snake = new Snake(new Position2D(0, 0), UNIT_SIZE);
+        snake = new Snake(new Position2D(0, UNIT_SIZE), UNIT_SIZE);
         
         random = new Random();
         
         apple = new Position2D(
-                random.nextInt((int) (SCREEN_WIDTH / UNIT_SIZE)) * UNIT_SIZE,
-                random.nextInt((int) (SCREEN_HEIGHT / UNIT_SIZE)) * UNIT_SIZE
+                random.nextInt(0, (int) (SCREEN_WIDTH / UNIT_SIZE)) * UNIT_SIZE,
+                random.nextInt(1, (int) (SCREEN_HEIGHT / UNIT_SIZE)) * UNIT_SIZE
         );
 
         running = true;
@@ -129,8 +129,8 @@ public class GamePanel extends JPanel implements ActionListener {
     }
     
     public void newApple() {
-        apple.x = random.nextInt((int) (SCREEN_WIDTH / UNIT_SIZE)) * UNIT_SIZE;
-        apple.y = random.nextInt((int) (SCREEN_HEIGHT / UNIT_SIZE)) * UNIT_SIZE;
+        apple.x = random.nextInt(0, (int) (SCREEN_WIDTH / UNIT_SIZE)) * UNIT_SIZE;
+        apple.y = random.nextInt(1, (int) (SCREEN_HEIGHT / UNIT_SIZE)) * UNIT_SIZE;
     }
     
     public void checkCollision() {
@@ -138,7 +138,7 @@ public class GamePanel extends JPanel implements ActionListener {
         if(snake.eatItSelf()) running = false;
         
         // Vérifier si la tête heurte un mur
-        if(snake.tete().x < 0 || snake.tete().x >= SCREEN_WIDTH || snake.tete().y < 0 || snake.tete().y >= SCREEN_HEIGHT)
+        if(snake.tete().x < 0 || snake.tete().x >= SCREEN_WIDTH || snake.tete().y < UNIT_SIZE || snake.tete().y >= SCREEN_HEIGHT)
             running = false;
         
         // S'il y'a une collision on stoppe le Timer
@@ -158,8 +158,8 @@ public class GamePanel extends JPanel implements ActionListener {
                 g.drawLine(0, i * UNIT_SIZE, SCREEN_WIDTH, i * UNIT_SIZE);
             
             // Les lignes verticales de la grille
-            for(int i = 0; i < SCREEN_WIDTH / UNIT_SIZE; i++)
-                g.drawLine(i * UNIT_SIZE, 0, i * UNIT_SIZE, SCREEN_HEIGHT);
+            for(int i = 1; i < SCREEN_WIDTH / UNIT_SIZE; i++)
+                g.drawLine(i * UNIT_SIZE, UNIT_SIZE, i * UNIT_SIZE, SCREEN_HEIGHT);
             
             // Dessiner le but
             g.setColor(Color.red);
@@ -177,7 +177,7 @@ public class GamePanel extends JPanel implements ActionListener {
             
             // Dessiner le niveau et le score
             String msg = "Level: " + level + "   Score: " + score;
-            g.setColor(Color.red);
+            g.setColor(Color.white);
             g.setFont(new Font("Ink Free", Font.BOLD, 20));
             g.drawString(msg , 10, g.getFont().getSize());
             
@@ -193,7 +193,7 @@ public class GamePanel extends JPanel implements ActionListener {
     public void gameOver(Graphics g) {
         // Dessiner le niveau et le score
         String msg = "Level: " + level + "   Score: " + score;
-        g.setColor(Color.red);
+        g.setColor(Color.white);
         g.setFont(new Font("Ink Free", Font.BOLD, 30));
         FontMetrics metrics1 = getFontMetrics(g.getFont());
         g.drawString(msg, (SCREEN_WIDTH - metrics1.stringWidth(msg)) / 2, g.getFont().getSize());
