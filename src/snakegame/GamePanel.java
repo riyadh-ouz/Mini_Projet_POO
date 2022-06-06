@@ -20,37 +20,40 @@ import java.awt.FontMetrics;
 
 import java.util.Random;
 
+
 /**
  * GamePanel hérite de JPanel pour dessiner les composants du jeu
  * Elle implémente l'interface ActionListener
- * Elle capture les évenements du Timer ainsi que le Clavier
+ * Elle capture les évenements du Timer ainsi que du Clavier
  * @author riyou
  */
 public class GamePanel extends JPanel implements ActionListener {
     
-    // Les attributs constantes du jeu
     static final int SCREEN_WIDTH = 600;
     static final int SCREEN_HEIGHT = 600;
     static final int UNIT_SIZE = 25; // La taille d'une cellule
-    static final int GAME_UNITS = (SCREEN_WIDTH * SCREEN_HEIGHT) / UNIT_SIZE;
-    static final int DELAY = 200; // L'intervalle de temps
-    final int X[] = new int[GAME_UNITS];
-    final int Y[] = new int[GAME_UNITS];
     
-    // Les attributs variables
-    int bodyParts = 6;
-    int applesEaten;
-    int appleX;
-    int appleY;
+    static final int MAX_APPLES_PER_LEVEL = 7;
+    static final int ACCELERATION = 25;
+    static final int MIN_DELAY = 50;
+    
+    
+    int delay = 200; // L'intervalle de temps pendant lequel le Timer déclenche une évènement
+    
+    int applesEatenPerLevel = 0;
+    int level = 1;
+    int score = 0;
+    
     char direction = 'R';
-    boolean running = false;
+    boolean running = false; // L'etat du jeu
+    
+    Snake snake;
     Timer timer;
     Random random;
+    Position2D apple; // La position du but
 
-    // Les méthodes
+    
     GamePanel() {
-        
-        random = new Random();
         
         this.setPreferredSize(new Dimension(SCREEN_WIDTH, SCREEN_HEIGHT));
         this.setBackground(Color.black);
@@ -63,158 +66,145 @@ public class GamePanel extends JPanel implements ActionListener {
     }
     
     public void startGame() {
-        newApple();
+        
+        snake = new Snake(new Position2D(0, 0), UNIT_SIZE);
+        
+        random = new Random();
+        
+        apple = new Position2D(
+                random.nextInt((int) (SCREEN_WIDTH / UNIT_SIZE)) * UNIT_SIZE,
+                random.nextInt((int) (SCREEN_HEIGHT / UNIT_SIZE)) * UNIT_SIZE
+        );
+
         running = true;
         
-        // Timer génère des évènements chaque DELEY ms
-        timer = new Timer(DELAY, this);
+        // Timer génère des évènements chaque delay ms
+        timer = new Timer(delay, this);
         timer.start();
     }
     
-    public void newApple() {
-        appleX = random.nextInt((int) (SCREEN_WIDTH / UNIT_SIZE)) * UNIT_SIZE;
-        appleY = random.nextInt((int) (SCREEN_HEIGHT / UNIT_SIZE)) * UNIT_SIZE;
-    }
-    
-    public void move() {
-        for(int i = bodyParts; i > 0; i--) {
-            X[i] = X[i-1];
-            Y[i] = Y[i-1];
-        }
-        switch (direction) {
-            case 'U':
-                Y[0] -= UNIT_SIZE;
-                break;
-            case 'D':
-                Y[0] += UNIT_SIZE;
-                break;
-            case 'L':
-                X[0] -= UNIT_SIZE;
-                break;
-            case 'R':
-                X[0] += UNIT_SIZE;
-                break;
-        }
-    }
-    
-    public void checkApple() {
-        if((X[0] == appleX) && (Y[0] == appleY)) {
-            bodyParts++;
-            applesEaten++;
-            newApple();
-        }
-    }
-    
-    public void checkCollision() {
-        // Vérifier si la tête heurte le corps
-        for(int i = bodyParts; i > 0; i--)
-            if((X[0] == X[i]) && (Y[0] == Y[i]))
-                running = false;
-        
-        // Vérifier si la tête heurte un mur
-        if(X[0] < 0 || X[0] > SCREEN_WIDTH || Y[0] < 0 || Y[0] > SCREEN_HEIGHT)
-            running = false;
-        
-        // S'il y'a une collision on stoppe le Timer
-        if(!running)
-            timer.stop();
-        
-    }
-    
     /**
-     * Dessiner les composnats du jeu
-     * @param g 
-     */
-    public void draw(Graphics g) {
-        if(running) {
-            
-            // Les lignes horizontales de la grille
-            for(int i = 0; i < SCREEN_HEIGHT / UNIT_SIZE; i++)
-                g.drawLine(0, i * UNIT_SIZE, SCREEN_WIDTH, i * UNIT_SIZE);
-            
-            // Les lignes verticales de la grille
-            for(int i = 0; i < SCREEN_WIDTH / UNIT_SIZE; i++)
-                g.drawLine(i * UNIT_SIZE, 0, i * UNIT_SIZE, SCREEN_HEIGHT);
-            
-            
-            // Dessiner le but
-            g.setColor(Color.red);
-            g.fillOval(appleX, appleY, UNIT_SIZE, UNIT_SIZE);
-            
-            // Dessiner la tête et le corps
-            for(int i = 0; i < bodyParts; i++) {
-                if(i==0)
-                    g.setColor(Color.green); // Spécifier la couleur pour la tête
-                else
-                    g.setColor(new Color(45,180,0)); // Spécifier la couleur pour le corps
-
-                g.fillRect(X[i], Y[i], UNIT_SIZE, UNIT_SIZE);
-            }    
-            
-            // Dessiner le score
-            g.setColor(Color.red);
-            g.setFont(new Font("Ink Free", Font.BOLD, 40));
-            FontMetrics metrics = getFontMetrics(g.getFont());
-            g.drawString(
-                    "Score: " + applesEaten,
-                    (SCREEN_WIDTH - metrics.stringWidth("Score: " + applesEaten)) / 2,
-                    g.getFont().getSize());
-            
-        }
-        else
-            gameOver(g);
-
-    }
-    
-    /**
-     * Dessiner les composants du jeu dans le cas du Game Over
-     * @param g 
-     */
-    public void gameOver(Graphics g) {
-        
-        // Dessiner le score
-        g.setColor(Color.red);
-        g.setFont(new Font("Ink Free", Font.BOLD, 40));
-        FontMetrics metrics1 = getFontMetrics(g.getFont());
-        g.drawString(
-                "Score: " + applesEaten,
-                (SCREEN_WIDTH - metrics1.stringWidth("Score: " + applesEaten)) / 2,
-                g.getFont().getSize());
-        
-        // Dessiner le message Game Over
-        g.setColor(Color.red);
-        g.setFont(new Font("Ink Free", Font.BOLD, 75));
-        FontMetrics metrics = getFontMetrics(g.getFont());
-        g.drawString(
-                "Game Over",
-                (SCREEN_WIDTH - metrics.stringWidth("Game Over")) / 2,
-                SCREEN_HEIGHT / 2);
-    }
-    
-    
-    /**
-     * Applé a chaque évènement par repaint()
-     * @param g 
-     */
-    public void paintComponent(Graphics g) {
-        super.paintComponent(g);
-        draw(g);
-    }
-    
-    /**
-     * Appelé a chaque fois qu'un évènement est déclenché
+     * Cette méthode est appelé à chaque fois qu'un évènement est déclenché
+     * Elle appelle paintComponent(Graphics g) pour redessiner les composants du jeu
      * @param e 
      */
     @Override
     public void actionPerformed(ActionEvent e) {
         if(running) {
-            move();
+            snake.move(direction);
             checkApple();
             checkCollision();
         }
         // repaint() appelle paintComponent(Graphics g) pour redessiner les composants du jeu
         repaint();
     }
+    
+    /**
+     * Cette méthode est appelé par repaint() après le déclenchement d'un évènement
+     * @param g 
+     */
+    @Override
+    public void paintComponent(Graphics g) {
+        super.paintComponent(g);
+        draw(g);
+    }
+    
+    public void checkApple() {
+        if(snake.collide(apple)) {
+            snake.eat();
+            
+            applesEatenPerLevel++;
+            if (applesEatenPerLevel >= MAX_APPLES_PER_LEVEL) {
+                level++;
+                applesEatenPerLevel = 1;
+                if (delay > MIN_DELAY) {
+                    delay -= ACCELERATION;
+                    timer.setDelay(delay);
+                }
+            }
+            score += level;
+            
+            newApple();
+        }
+    }
+    
+    public void newApple() {
+        apple.x = random.nextInt((int) (SCREEN_WIDTH / UNIT_SIZE)) * UNIT_SIZE;
+        apple.y = random.nextInt((int) (SCREEN_HEIGHT / UNIT_SIZE)) * UNIT_SIZE;
+    }
+    
+    public void checkCollision() {
+        
+        if(snake.eatItSelf()) running = false;
+        
+        // Vérifier si la tête heurte un mur
+        if(snake.tete().x < 0 || snake.tete().x >= SCREEN_WIDTH || snake.tete().y < 0 || snake.tete().y >= SCREEN_HEIGHT)
+            running = false;
+        
+        // S'il y'a une collision on stoppe le Timer
+        if(!running)
+            timer.stop();
+    }
+    
+    /**
+     * Dessine les composnats du jeu
+     * @param g 
+     */
+    public void draw(Graphics g) {
+        if(running) {
+            
+            // Les lignes horizontales de la grille
+            for(int i = 1; i < SCREEN_HEIGHT / UNIT_SIZE; i++)
+                g.drawLine(0, i * UNIT_SIZE, SCREEN_WIDTH, i * UNIT_SIZE);
+            
+            // Les lignes verticales de la grille
+            for(int i = 0; i < SCREEN_WIDTH / UNIT_SIZE; i++)
+                g.drawLine(i * UNIT_SIZE, 0, i * UNIT_SIZE, SCREEN_HEIGHT);
+            
+            // Dessiner le but
+            g.setColor(Color.red);
+            g.fillOval(apple.x, apple.y, UNIT_SIZE, UNIT_SIZE);
+            
+            // Dessiner le snake
+            for(Position2D element : this.snake.body) {
+                if(element == this.snake.tete())
+                    g.setColor(Color.green); // Spécifier la couleur pour la tête
+                else
+                    g.setColor(new Color(45,180,0)); // Spécifier la couleur pour le corps
+                
+                g.fillRect(element.x, element.y, UNIT_SIZE, UNIT_SIZE);
+            }
+            
+            // Dessiner le niveau et le score
+            String msg = "Level: " + level + "   Score: " + score;
+            g.setColor(Color.red);
+            g.setFont(new Font("Ink Free", Font.BOLD, 20));
+            g.drawString(msg , 10, g.getFont().getSize());
+            
+        }
+        else gameOver(g);
+
+    }
+    
+    /**
+     * Dessine les composants du jeu dans le cas du Game Over
+     * @param g 
+     */
+    public void gameOver(Graphics g) {
+        // Dessiner le niveau et le score
+        String msg = "Level: " + level + "   Score: " + score;
+        g.setColor(Color.red);
+        g.setFont(new Font("Ink Free", Font.BOLD, 30));
+        FontMetrics metrics1 = getFontMetrics(g.getFont());
+        g.drawString(msg, (SCREEN_WIDTH - metrics1.stringWidth(msg)) / 2, g.getFont().getSize());
+        
+        // Dessiner le message Game Over
+        g.setColor(Color.red);
+        g.setFont(new Font("Ink Free", Font.BOLD, 75));
+        FontMetrics metrics = getFontMetrics(g.getFont());
+        g.drawString( "Game Over", (SCREEN_WIDTH - metrics.stringWidth("Game Over")) / 2, SCREEN_HEIGHT / 2);
+    }
+    
     
     /**
      * Cette classe permet de capturer les touches de direction
@@ -225,18 +215,18 @@ public class GamePanel extends JPanel implements ActionListener {
         @Override
         public void keyPressed(KeyEvent e) {
             switch (e.getKeyCode()) {
-                case KeyEvent.VK_LEFT:
+                case KeyEvent.VK_LEFT -> {
                     if(direction != 'R') direction = 'L';
-                    break;
-                case KeyEvent.VK_RIGHT:
+                }
+                case KeyEvent.VK_RIGHT -> {
                     if(direction != 'L') direction = 'R';
-                    break;
-                case KeyEvent.VK_UP:
+                }
+                case KeyEvent.VK_UP -> {
                     if(direction != 'D') direction = 'U';
-                    break;
-                case KeyEvent.VK_DOWN:
+                }
+                case KeyEvent.VK_DOWN -> {
                     if(direction != 'U') direction = 'D';
-                    break;
+                }
             }
         }
         
