@@ -215,6 +215,17 @@ public class GamePanel extends JPanel implements ActionListener {
         @Override
         public void keyPressed(KeyEvent e) {
             switch (e.getKeyCode()) {
+                case KeyEvent.VK_SPACE -> {
+                    // Pause
+                    if (running) {
+                        running = false;
+                        timer.stop();
+                    }
+                    else {
+                        running = true;
+                        timer.start();
+                    }
+                }
                 case KeyEvent.VK_LEFT -> {
                     if(direction != 'R') direction = 'L';
                 }
