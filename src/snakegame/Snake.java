@@ -40,7 +40,7 @@ public class Snake {
     }
     
     public boolean collide(Position2D p) {
-        return (tete().x == p.x && tete().y == p.y);
+        return (tete().equals(p));
     }
     
     public boolean eatItSelf() {
