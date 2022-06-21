@@ -50,9 +50,8 @@ public class GamePanel extends JPanel implements ActionListener {
     Snake snake;
     Timer timer;
     Random random;
-    Position2D apple; // La position du but
+    Apple apple;
 
-    
     GamePanel() {
         
         this.setPreferredSize(new Dimension(SCREEN_WIDTH, SCREEN_HEIGHT));
@@ -67,14 +66,14 @@ public class GamePanel extends JPanel implements ActionListener {
     
     public void startGame() {
         
-        snake = new Snake(new Position2D(0, UNIT_SIZE), UNIT_SIZE);
+        snake = new Snake(new Position2D(0, UNIT_SIZE), UNIT_SIZE, Color.green, new Color(45,180,0));
         
         random = new Random();
         
-        apple = new Position2D(
+        apple = new Apple(new Position2D(
                 random.nextInt(0, (int) (SCREEN_WIDTH / UNIT_SIZE)) * UNIT_SIZE,
                 random.nextInt(1, (int) (SCREEN_HEIGHT / UNIT_SIZE)) * UNIT_SIZE
-        );
+        ), Color.red);
 
         running = true;
         
@@ -110,7 +109,7 @@ public class GamePanel extends JPanel implements ActionListener {
     }
     
     public void checkApple() {
-        if(snake.collide(apple)) {
+        if(snake.collide(apple.getPosition())) {
             snake.eat();
             
             applesEatenPerLevel++;
@@ -124,13 +123,12 @@ public class GamePanel extends JPanel implements ActionListener {
             }
             score += level;
             
-            newApple();
+            // Set a new position for the apple
+            apple.setPosition(
+                    new Position2D(random.nextInt(0, (int) (SCREEN_WIDTH / UNIT_SIZE)) * UNIT_SIZE,
+                    random.nextInt(1, (int) (SCREEN_HEIGHT / UNIT_SIZE)) * UNIT_SIZE
+                    ));
         }
-    }
-    
-    public void newApple() {
-        apple.x = random.nextInt(0, (int) (SCREEN_WIDTH / UNIT_SIZE)) * UNIT_SIZE;
-        apple.y = random.nextInt(1, (int) (SCREEN_HEIGHT / UNIT_SIZE)) * UNIT_SIZE;
     }
     
     public void checkCollision() {
@@ -138,7 +136,7 @@ public class GamePanel extends JPanel implements ActionListener {
         if(snake.eatItSelf()) running = false;
         
         // Vérifier si la tête heurte un mur
-        if(snake.tete().x < 0 || snake.tete().x >= SCREEN_WIDTH || snake.tete().y < UNIT_SIZE || snake.tete().y >= SCREEN_HEIGHT)
+        if(snake.getHead().x < 0 || snake.getHead().x >= SCREEN_WIDTH || snake.getHead().y < UNIT_SIZE || snake.getHead().y >= SCREEN_HEIGHT)
             running = false;
         
         // S'il y'a une collision on stoppe le Timer
@@ -162,15 +160,15 @@ public class GamePanel extends JPanel implements ActionListener {
                 g.drawLine(i * UNIT_SIZE, UNIT_SIZE, i * UNIT_SIZE, SCREEN_HEIGHT);
             
             // Dessiner le but
-            g.setColor(Color.red);
-            g.fillOval(apple.x, apple.y, UNIT_SIZE, UNIT_SIZE);
+            g.setColor(apple.getColor());
+            g.fillOval(apple.getX(), apple.getY(), UNIT_SIZE, UNIT_SIZE);
             
             // Dessiner le snake
-            for(Position2D element : this.snake.body) {
-                if(element == this.snake.tete())
-                    g.setColor(Color.green); // Spécifier la couleur pour la tête
+            for(Position2D element : this.snake.getBody()) {
+                if(element == this.snake.getHead())
+                    g.setColor(snake.getHeadColor()); // Spécifier la couleur pour la tête
                 else
-                    g.setColor(new Color(45,180,0)); // Spécifier la couleur pour le corps
+                    g.setColor(snake.getHeadColor()); // Spécifier la couleur pour le corps
                 
                 g.fillRect(element.x, element.y, UNIT_SIZE, UNIT_SIZE);
             }
